@@ -1,17 +1,32 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserNav } from "@/components/user-nav"
 import { useAuth } from "@/lib/context/auth-context"
 import { Software } from "@/types/software"
-import { getSoftwares, addSoftware, updateSoftware, deleteSoftware } from "@/lib/firebase/firestore"
+import { getSoftwares, addSoftware, updateSoftware, deleteSoftware, updateSoftwareOrder } from "@/lib/firebase/firestore"
 import { toast } from "sonner"
+import { SoftwareCard } from "./software-card"
 
 export function Page() {
   const { user } = useAuth()
@@ -108,6 +123,34 @@ export function Page() {
     setRating(software.rating.toString())
   }
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      setSoftwares((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id)
+        const newIndex = items.findIndex((item) => item.id === over.id)
+
+        const newItems = arrayMove(items, oldIndex, newIndex)
+        
+        // Save the new order to Firestore
+        updateSoftwareOrder(newItems).catch((error) => {
+          console.error('Error saving order:', error)
+          toast.error('Failed to save order')
+        })
+
+        return newItems
+      })
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="border-b">
@@ -164,25 +207,27 @@ export function Page() {
             <Button type="submit" className="mt-4">{editingId ? 'Update' : 'Add'} Software</Button>
           </form>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {softwares.map(software => (
-              <Card key={software.id}>
-                <CardHeader>
-                  <CardTitle>{software.name}</CardTitle>
-                  <CardDescription>{software.category}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p>{software.description}</p>
-                  <p className="mt-2">Price: ${software.price}/month</p>
-                  <p>Rating: {software.rating}/5</p>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button variant="outline" onClick={() => handleEdit(software)}>Edit</Button>
-                  <Button variant="destructive" onClick={() => handleDelete(software.id)}>Delete</Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={softwares.map(s => s.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {softwares.map(software => (
+                  <SoftwareCard
+                    key={software.id}
+                    software={software}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       </main>
     </div>

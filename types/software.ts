@@ -8,4 +8,5 @@ export interface Software {
   rating: number
   createdAt: Date
   updatedAt: Date
+  order: number
 } 
