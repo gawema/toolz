@@ -36,7 +36,7 @@ export default function LoginPage() {
           >
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          SaaS Software Tracker
+          Tuulz
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
@@ -50,10 +50,10 @@ export default function LoginPage() {
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col space-y-2 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">
-              Welcome back
+              Welcome to Tuulz
             </h1>
             <p className="text-sm text-muted-foreground">
-              Enter your credentials to access your account
+              Sign in to manage your tools
             </p>
           </div>
           <LoginForm />

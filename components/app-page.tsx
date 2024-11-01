@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   DndContext, 
   closestCenter,
@@ -38,13 +38,7 @@ export function Page() {
   const [rating, setRating] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (user) {
-      fetchSoftwares()
-    }
-  }, [user])
-
-  const fetchSoftwares = async () => {
+  const fetchSoftwares = React.useCallback(async () => {
     try {
       if (!user) return
       const data = await getSoftwares(user.uid)
@@ -53,7 +47,13 @@ export function Page() {
       console.error('Error fetching softwares:', error)
       toast.error('Failed to load softwares')
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (user) {
+      fetchSoftwares()
+    }
+  }, [user, fetchSoftwares])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -156,7 +156,7 @@ export function Page() {
       <header className="border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="flex h-16 items-center justify-between">
-            <div className="text-xl font-semibold">SaaS Software Tracker</div>
+            <div className="text-xl font-semibold">Tuulz</div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
                 {user?.displayName}
@@ -168,7 +168,7 @@ export function Page() {
       </header>
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-2xl font-bold mb-4">SaaS Software Tracker</h1>
+          <h1 className="text-2xl font-bold mb-4 uppercase">Add new Tool</h1>
           
           <form onSubmit={handleSubmit} className="mb-8">
             <div className="grid grid-cols-2 gap-4">
@@ -204,7 +204,7 @@ export function Page() {
                 <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} required />
               </div>
             </div>
-            <Button type="submit" className="mt-4">{editingId ? 'Update' : 'Add'} Software</Button>
+            <Button type="submit" className="mt-4">{editingId ? 'Update' : 'Add'} Tool</Button>
           </form>
 
           <DndContext
