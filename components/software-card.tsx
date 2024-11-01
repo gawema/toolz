@@ -32,10 +32,13 @@ export function SoftwareCard({ software, onEdit, onDelete }: SoftwareCardProps) 
     <Card
       ref={setNodeRef}
       style={style}
-      className="cursor-move"
-      {...attributes}
-      {...listeners}
+      className="relative"
     >
+      <div 
+        className="absolute inset-0 bottom-[56px] cursor-move" 
+        {...attributes} 
+        {...listeners}
+      />
       <CardHeader>
         <CardTitle>{software.name}</CardTitle>
         <CardDescription>{software.category}</CardDescription>
@@ -45,7 +48,7 @@ export function SoftwareCard({ software, onEdit, onDelete }: SoftwareCardProps) 
         <p className="mt-2">Price: ${software.price}/month</p>
         <p>Rating: {software.rating}/5</p>
       </CardContent>
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-between relative">
         <Button variant="outline" onClick={() => onEdit(software)}>Edit</Button>
         <Button variant="destructive" onClick={() => onDelete(software.id)}>Delete</Button>
       </CardFooter>
