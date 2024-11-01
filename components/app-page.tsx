@@ -81,7 +81,8 @@ export function Page() {
           price: parseFloat(price),
           rating: parseFloat(rating),
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          order: 0
         }
         await addSoftware(newSoftware)
         toast.success('Software added successfully')
