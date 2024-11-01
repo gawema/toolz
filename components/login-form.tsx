@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { signInWithGoogle } from "@/lib/firebase/auth"
+import { toast } from "sonner"
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
@@ -15,9 +16,14 @@ export function LoginForm() {
       setIsLoading(true)
       await signInWithGoogle()
       router.push("/")
-    } catch (error) {
-      console.error("Authentication failed:", error)
-      // TODO: Add proper error handling/display
+    } catch (error: any) {
+      if (error.code === 'auth/popup-blocked') {
+        toast.error('Please allow popups for this website to sign in with Google')
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        toast.error('Sign-in was cancelled')
+      } else {
+        toast.error('Failed to sign in with Google')
+      }
     } finally {
       setIsLoading(false)
     }
