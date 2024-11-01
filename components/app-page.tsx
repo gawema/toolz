@@ -9,15 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserNav } from "@/components/user-nav"
 import { useAuth } from "@/lib/context/auth-context"
-
-type Software = {
-  id: string
-  name: string
-  description: string
-  category: string
-  price: number
-  rating: number
-}
+import { Software } from "@/types/software"
+import { getSoftwares, addSoftware, updateSoftware, deleteSoftware } from "@/lib/firebase/firestore"
+import { toast } from "sonner"
 
 export function Page() {
   const { user } = useAuth()
@@ -30,49 +24,79 @@ export function Page() {
   const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchSoftwares()
-  }, [])
-
-  const fetchSoftwares = () => {
-    // This is a mock function. In a real app, you'd fetch from an API or database
-    const mockSoftwares: Software[] = [
-      { id: '1', name: 'Slack', description: 'Team communication tool', category: 'Communication', price: 12.50, rating: 4.5 },
-      { id: '2', name: 'Trello', description: 'Project management tool', category: 'Productivity', price: 10, rating: 4.2 },
-      { id: '3', name: 'Zoom', description: 'Video conferencing tool', category: 'Communication', price: 14.99, rating: 4.3 },
-    ]
-    setSoftwares(mockSoftwares)
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (editingId) {
-      // Update existing software
-      setSoftwares(softwares.map(sw => 
-        sw.id === editingId ? { ...sw, name, description, category, price: parseFloat(price), rating: parseFloat(rating) } : sw
-      ))
-      setEditingId(null)
-    } else {
-      // Add new software
-      const newSoftware: Software = {
-        id: Date.now().toString(),
-        name,
-        description,
-        category,
-        price: parseFloat(price),
-        rating: parseFloat(rating)
-      }
-      setSoftwares([...softwares, newSoftware])
+    if (user) {
+      fetchSoftwares()
     }
-    // Reset form
-    setName('')
-    setDescription('')
-    setCategory('')
-    setPrice('')
-    setRating('')
+  }, [user])
+
+  const fetchSoftwares = async () => {
+    try {
+      if (!user) return
+      const data = await getSoftwares(user.uid)
+      setSoftwares(data)
+    } catch (error) {
+      console.error('Error fetching softwares:', error)
+      toast.error('Failed to load softwares')
+    }
   }
 
-  const handleDelete = (id: string) => {
-    setSoftwares(softwares.filter(sw => sw.id !== id))
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+
+    try {
+      if (editingId) {
+        // Update existing software
+        await updateSoftware(editingId, {
+          name,
+          description,
+          category,
+          price: parseFloat(price),
+          rating: parseFloat(rating),
+          updatedAt: new Date()
+        })
+        toast.success('Software updated successfully')
+      } else {
+        // Add new software
+        const newSoftware: Omit<Software, 'id'> = {
+          userId: user.uid,
+          name,
+          description,
+          category,
+          price: parseFloat(price),
+          rating: parseFloat(rating),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        await addSoftware(newSoftware)
+        toast.success('Software added successfully')
+      }
+      
+      // Refresh the list
+      fetchSoftwares()
+      
+      // Reset form
+      setName('')
+      setDescription('')
+      setCategory('')
+      setPrice('')
+      setRating('')
+      setEditingId(null)
+    } catch (error) {
+      console.error('Error saving software:', error)
+      toast.error('Failed to save software')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteSoftware(id)
+      toast.success('Software deleted successfully')
+      fetchSoftwares()
+    } catch (error) {
+      console.error('Error deleting software:', error)
+      toast.error('Failed to delete software')
+    }
   }
 
   const handleEdit = (software: Software) => {
